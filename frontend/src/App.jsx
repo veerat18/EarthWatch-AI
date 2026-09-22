@@ -1,38 +1,35 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+import React, { useState } from 'react';
+import { AppLayout } from './components/layout/AppLayout';
+import { Dashboard } from './pages/Dashboard';
+import './App.css';
 
 function App() {
-  const [backendStatus, setBackendStatus] = useState('Checking...')
-
-  useEffect(() => {
-    fetch('http://127.0.0.1:8000/health')
-      .then((res) => res.json())
-      .then((data) => {
-        setBackendStatus(`${data.project} (${data.status})`)
-      })
-      .catch(() => {
-        setBackendStatus('Backend offline or unreachable')
-      })
-  }, [])
+  const [activeModule, setActiveModule] = useState('Overview');
 
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <header>
-        <h1>EarthWatch AI</h1>
-        <p>AI-Powered Geospatial Intelligence Platform</p>
-      </header>
-
-      <main style={{ marginTop: '2rem', padding: '1.5rem', border: '1px solid #ddd', borderRadius: '8px' }}>
-        <h2>Foundation Setup</h2>
-        <p>
-          <strong>Backend Health Status:</strong> {backendStatus}
-        </p>
-        <p>
-          Basic frontend scaffolded with React + Vite. Awaiting subsequent pipeline stages.
-        </p>
-      </main>
-    </div>
-  )
+    <AppLayout activeModule={activeModule} onSelectModule={setActiveModule}>
+      {activeModule === 'Overview' ? (
+        <Dashboard />
+      ) : (
+        <div className="ew-placeholder-module" role="region" aria-label={`${activeModule} Module State`}>
+          <div className="ew-placeholder-card">
+            <span className="ew-placeholder-badge">MODULE IN DESIGN</span>
+            <h2>{activeModule}</h2>
+            <p>
+              This command capability is scheduled for upcoming phases following Earth Observation imagery ingestion.
+            </p>
+            <button
+              type="button"
+              className="ew-btn ew-btn-secondary"
+              onClick={() => setActiveModule('Overview')}
+            >
+              RETURN TO OVERVIEW
+            </button>
+          </div>
+        </div>
+      )}
+    </AppLayout>
+  );
 }
 
-export default App
+export default App;
