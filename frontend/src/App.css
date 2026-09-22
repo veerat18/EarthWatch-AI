@@ -16,7 +16,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0; /* Prevents overflow issues in flex children */
+  min-width: 0;
   margin-left: var(--sidebar-width);
   transition: margin-left 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -425,7 +425,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Panels & Glass Surfaces (Clean Aerospace Aesthetic)
+   Panels & Glass Surfaces
    -------------------------------------------------------------------------- */
 .ew-panel {
   background: var(--bg-surface-glass);
@@ -501,7 +501,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Statistics KPI Cards Row (4 cards with '--' placeholders)
+   Statistics KPI Cards Row
    -------------------------------------------------------------------------- */
 .ew-stats-grid {
   display: grid;
@@ -590,7 +590,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Central Earth Observation Viewport (Hero)
+   Earth Observation Viewport (Hero)
    -------------------------------------------------------------------------- */
 .ew-viewport-panel {
   border: 1px solid var(--border-panel);
@@ -620,7 +620,6 @@
   justify-content: center;
 }
 
-/* Corner HUD Brackets */
 .ew-corner-bracket {
   position: absolute;
   width: 14px;
@@ -659,7 +658,6 @@
   border-right: 2px solid;
 }
 
-/* World Grid SVG */
 .ew-world-grid-svg {
   position: absolute;
   top: 0;
@@ -669,7 +667,6 @@
   opacity: 0.75;
 }
 
-/* Animated Radar Scanline */
 .ew-viewport-scanline {
   position: absolute;
   left: 0;
@@ -689,7 +686,6 @@
   z-index: 5;
 }
 
-/* Pending Message Overlay */
 .ew-viewport-pending-overlay {
   position: relative;
   z-index: 10;
@@ -817,7 +813,6 @@
   color: var(--accent-cyan);
 }
 
-/* Viewport HUD Footer */
 .ew-viewport-hud-footer {
   position: absolute;
   bottom: 0;
@@ -853,11 +848,60 @@
    -------------------------------------------------------------------------- */
 .ew-dual-panel-grid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: 1.45fr 1fr;
   gap: 20px;
 }
 
-/* Form Styles */
+/* Form Alert Banners */
+.ew-alert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--panel-radius);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  margin-bottom: 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+.ew-alert-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--status-critical);
+}
+
+.ew-alert-warning {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: var(--status-warning);
+}
+
+.ew-alert-badge {
+  font-size: 9px;
+  font-weight: 700;
+  background: rgba(239, 68, 68, 0.2);
+  padding: 1px 5px;
+  border-radius: 2px;
+  letter-spacing: 0.08em;
+}
+
+.ew-badge-warning {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.ew-alert-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ew-alert-hint {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
 .ew-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -868,6 +912,10 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.ew-form-group-full {
+  grid-column: 1 / -1;
 }
 
 .ew-form-label {
@@ -936,6 +984,34 @@
   line-height: 1.3;
 }
 
+/* Slider Filter */
+.ew-slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ew-range-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ew-range-input {
+  width: 100%;
+  accent-color: var(--accent-cyan);
+  cursor: pointer;
+}
+
+.ew-range-scale {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+/* Form Actions */
 .ew-form-actions {
   display: flex;
   align-items: center;
@@ -944,6 +1020,10 @@
   padding-top: 16px;
   border-top: 1px solid var(--border-subtle);
   gap: 16px;
+}
+
+.ew-form-actions-full {
+  grid-column: 1 / -1;
 }
 
 .ew-btn {
@@ -959,6 +1039,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
 }
 
 .ew-btn-primary {
@@ -973,32 +1054,292 @@
 }
 
 .ew-btn:disabled {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: not-allowed;
   border-color: var(--border-subtle);
 }
 
-.ew-action-notice {
+.ew-btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0, 240, 255, 0.2);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: radarSweep 0.8s linear infinite;
+}
+
+.ew-action-telemetry-meta {
   display: flex;
   align-items: center;
   gap: 8px;
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--text-muted);
-}
-
-.ew-notice-badge {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--status-warning);
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.25);
-  padding: 1px 5px;
-  border-radius: 2px;
+  color: var(--text-dim);
 }
 
 /* --------------------------------------------------------------------------
-   AI Insight Panel (Waveform Empty State)
+   Discovered Satellite Scenes Container & Empty State
+   -------------------------------------------------------------------------- */
+.ew-scene-results-container {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ew-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ew-results-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ew-results-icon {
+  color: var(--accent-blue);
+}
+
+.ew-results-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+
+.ew-results-count-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+/* Scenes Empty State */
+.ew-scenes-empty-state {
+  border: 1px dashed var(--border-panel);
+  border-radius: var(--panel-radius);
+  background: rgba(6, 9, 14, 0.4);
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.ew-scenes-empty-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.05);
+  border: 1px solid var(--border-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-cyan);
+  margin-bottom: 2px;
+}
+
+.ew-scenes-empty-title {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+}
+
+.ew-scenes-empty-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 360px;
+}
+
+.ew-scenes-empty-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* Discovered Scenes Grid (When populated with real scenes) */
+.ew-scenes-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.ew-scene-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--panel-radius);
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.ew-scene-card:hover {
+  border-color: var(--border-panel);
+}
+
+.ew-scene-card-selected {
+  border-color: var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.05);
+}
+
+.ew-scene-thumb-wrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--panel-radius);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ew-scene-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ew-scene-thumb-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-dim);
+  font-size: 8px;
+  font-family: var(--font-mono);
+}
+
+.ew-scene-level-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  background: rgba(6, 9, 14, 0.85);
+  color: var(--accent-cyan);
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+.ew-scene-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ew-scene-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ew-scene-satellite {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+.ew-scene-cloud {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.ew-scene-id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ew-scene-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.ew-scene-date {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+}
+
+.ew-meta-icon {
+  color: var(--text-dim);
+}
+
+.ew-scene-bbox {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ew-bbox-label {
+  color: var(--text-dim);
+}
+
+.ew-scene-select-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 6px 12px;
+  border-radius: var(--panel-radius);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-panel);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.ew-scene-select-btn:hover {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.ew-btn-active {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+/* --------------------------------------------------------------------------
+   AI Insight Panel
    -------------------------------------------------------------------------- */
 .ew-ai-header-text {
   display: flex;
@@ -1087,7 +1428,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Capability Grid (Clearly marked as capabilities, not fake results)
+   Capability Grid
    -------------------------------------------------------------------------- */
 .ew-capabilities-section {
   display: flex;
@@ -1213,7 +1554,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Recent Analyses (Genuine Empty State)
+   Recent Analyses (Empty State)
    -------------------------------------------------------------------------- */
 .ew-empty-state-box {
   border: 1px dashed var(--border-panel);
@@ -1269,7 +1610,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Placeholder Module (When clicking other sidebar links)
+   Placeholder Module
    -------------------------------------------------------------------------- */
 .ew-placeholder-module {
   min-height: 400px;
@@ -1317,7 +1658,6 @@
 /* --------------------------------------------------------------------------
    Responsive Breakpoints
    -------------------------------------------------------------------------- */
-/* Laptop / Standard Desktop (1200px and below) */
 @media (max-width: 1200px) {
   .ew-stats-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1330,7 +1670,6 @@
   }
 }
 
-/* Tablet (1024px and below) */
 @media (max-width: 1024px) {
   .ew-main-wrapper {
     margin-left: 0;
@@ -1366,7 +1705,6 @@
   }
 }
 
-/* Mobile Devices (768px and below) */
 @media (max-width: 768px) {
   .ew-main-content {
     padding: 14px;
@@ -1420,5 +1758,23 @@
   .ew-ai-telemetry-spec {
     grid-template-columns: 1fr;
     text-align: left;
+  }
+
+  .ew-scene-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ew-scene-thumb-wrap {
+    width: 100%;
+    height: 120px;
+  }
+
+  .ew-scene-action {
+    width: 100%;
+  }
+
+  .ew-scene-select-btn {
+    width: 100%;
   }
 }
