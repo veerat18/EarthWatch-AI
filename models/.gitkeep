@@ -1,0 +1,3 @@
+# Model Weights and Checkpoints
+Stores trained neural network weights, configuration files, and exported ONNX/PyTorch models.
+Model weight binaries are excluded from version control via .gitignore.

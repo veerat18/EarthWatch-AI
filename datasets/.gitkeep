@@ -1,0 +1,3 @@
+# Satellite Imagery & Processed Datasets
+This directory stores raw and processed satellite data, geojson annotations, and imagery patches.
+Raw imagery files are excluded from version control via .gitignore.

@@ -1,0 +1,1 @@
+"""EarthWatch AI Application Package."""
