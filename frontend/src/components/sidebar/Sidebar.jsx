@@ -11,15 +11,15 @@ import {
 
 const NAV_ITEMS = [
   { id: 'Overview', label: 'Overview', icon: GlobeIcon, active: true, badge: 'LIVE' },
-  { id: 'Analyze Imagery', label: 'Analyze Imagery', icon: SatelliteIcon, active: false, badge: 'STAGE 3' },
-  { id: 'Change Detection', label: 'Change Detection', icon: LayersIcon, active: false, badge: 'PLANNED' },
-  { id: 'Environmental', label: 'Environmental', icon: ActivityIcon, active: false, badge: 'PLANNED' },
-  { id: 'Disaster Monitor', label: 'Disaster Monitor', icon: ShieldAlertIcon, active: false, badge: 'PLANNED' },
-  { id: 'Reports', label: 'Reports', icon: FileTextIcon, active: false, badge: 'PLANNED' },
-  { id: 'Settings', label: 'Settings', icon: SettingsIcon, active: false, badge: 'CONFIG' }
+  { id: 'Analyze Imagery', label: 'Analyze Imagery', icon: SatelliteIcon, active: true, badge: 'LIVE' },
+  { id: 'Change Detection', label: 'Change Detection', icon: LayersIcon, active: true, badge: 'LIVE' },
+  { id: 'Environmental', label: 'Environmental', icon: ActivityIcon, active: true, badge: 'LIVE' },
+  { id: 'Disaster Monitor', label: 'Disaster Monitor', icon: ShieldAlertIcon, active: true, badge: 'LIVE' },
+  { id: 'Reports', label: 'Reports', icon: FileTextIcon, active: true, badge: 'LIVE' },
+  { id: 'Settings', label: 'Settings', icon: SettingsIcon, active: true, badge: 'CONFIG' }
 ];
 
-export function Sidebar({ isOpen, onClose, activeModule = 'Overview', onSelectModule }) {
+export function Sidebar({ isOpen, onClose, activeModule = 'Overview', onSelectModule, stacStatus = 'STANDBY' }) {
   return (
     <>
       {/* Backdrop for mobile drawer */}
@@ -88,7 +88,7 @@ export function Sidebar({ isOpen, onClose, activeModule = 'Overview', onSelectMo
             </div>
             <div className="ew-meta-row">
               <span className="ew-meta-key">STAC ENGINE:</span>
-              <span className="ew-meta-val">STANDBY</span>
+              <span className="ew-meta-val" style={{ color: stacStatus === 'CONNECTED' ? '#4ade80' : 'inherit' }}>{stacStatus}</span>
             </div>
           </div>
 

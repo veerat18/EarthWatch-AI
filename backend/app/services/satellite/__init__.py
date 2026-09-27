@@ -1,3 +1,8 @@
+from app.services.satellite.aoi import (
+    resolve_aoi_geometry,
+    AOIValidationError,
+    SUPPORTED_DEVELOPMENT_LOCATIONS,
+)
 from app.services.satellite.base import BaseSatelliteProvider
 from app.services.satellite.models import (
     SatelliteSearchRequest,
@@ -16,4 +21,7 @@ __all__ = [
     "SatelliteScene",
     "SatelliteSourceInfo",
     "SatelliteSourceEnum",
+    "resolve_aoi_geometry",
+    "AOIValidationError",
+    "SUPPORTED_DEVELOPMENT_LOCATIONS",
 ]

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Sidebar } from '../sidebar/Sidebar';
 import { Topbar } from '../topbar/Topbar';
 
-export function AppLayout({ children, activeModule = 'Overview', onSelectModule }) {
+export function AppLayout({ children, activeModule = 'Overview', onSelectModule, stacStatus = 'STANDBY' }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -21,6 +21,7 @@ export function AppLayout({ children, activeModule = 'Overview', onSelectModule 
         onClose={closeSidebar}
         activeModule={activeModule}
         onSelectModule={onSelectModule}
+        stacStatus={stacStatus}
       />
 
       {/* Main Content Area */}

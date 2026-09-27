@@ -4,6 +4,7 @@ from app.services.satellite.models import (
     SatelliteSearchRequest,
     SatelliteSearchResponse,
     SatelliteSourceInfo,
+    SatelliteAssetsResponse,
 )
 from app.services.satellite.sentinel2 import Sentinel2Provider
 
@@ -49,3 +50,57 @@ def get_supported_satellite_sources() -> List[SatelliteSourceInfo]:
     clearly distinguishing connected pipelines from integration pending sources.
     """
     return provider.get_sources_info()
+
+@router.get(
+    "/satellite/scenes/{scene_id}/preview",
+    status_code=status.HTTP_200_OK,
+    summary="Get real satellite scene preview",
+    description="Retrieve the actual STAC preview asset URL for a specific scene.",
+)
+async def get_scene_preview(scene_id: str):
+    """
+    Returns the real STAC thumbnail URL or a clean unavailability response.
+    Never generates fake previews.
+    """
+    try:
+        response = await provider.get_scene_preview(scene_id)
+        if response.get("status") == "error":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=response.get("message")
+            )
+        return response
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while fetching preview."
+        )
+
+@router.get(
+    "/satellite/scenes/{scene_id}/assets",
+    response_model=SatelliteAssetsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Inspect scene raster assets",
+    description="Retrieve available raster assets for a STAC scene.",
+)
+async def inspect_scene_assets(scene_id: str) -> SatelliteAssetsResponse:
+    """
+    Returns available raster assets (B02, B03, B04, etc.) without downloading them.
+    """
+    try:
+        response = await provider.inspect_scene_assets(scene_id)
+        if response.get("status") == "error":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=response.get("message")
+            )
+        return SatelliteAssetsResponse(**response)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while inspecting scene assets."
+        )

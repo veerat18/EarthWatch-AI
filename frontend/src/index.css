@@ -1,7 +1,7 @@
 /* EarthWatch AI - Geospatial Intelligence Command Center Theme */
 
 :root {
-  /* Color System */
+  /* Page & Surface Tokens */
   --bg-primary: #06090e;
   --bg-surface: #0a0f1d;
   --bg-surface-elevated: #0f172a;
@@ -12,30 +12,62 @@
   --border-subtle: rgba(255, 255, 255, 0.07);
   --border-panel: rgba(56, 189, 248, 0.15);
   --border-panel-hover: rgba(56, 189, 248, 0.35);
-  --grid-line: rgba(56, 189, 248, 0.04);
+  --border-accent: rgba(0, 240, 255, 0.4);
+  --grid-line: rgba(56, 189, 248, 0.035);
 
-  /* Typography */
+  /* Typography Hierarchy */
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --text-dim: #475569;
 
-  /* Restrained Telemetry Accents */
+  /* Mission Accents */
   --accent-cyan: #00f0ff;
   --accent-blue: #38bdf8;
   --accent-blue-dim: rgba(56, 189, 248, 0.1);
+  --accent-purple: #a78bfa;
+  --accent-purple-dim: rgba(167, 139, 250, 0.1);
+
+  /* Telemetry Status Tokens */
   --status-online: #10b981;
   --status-warning: #f59e0b;
   --status-critical: #ef4444;
+  --status-info: #38bdf8;
+
+  /* Spacing Tokens */
+  --space-2xs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+
+  /* Border Radii */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --panel-radius: 4px;
+
+  /* Shadows */
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-panel: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  /* Transitions */
+  --transition-fast: 0.12s ease;
+  --transition-normal: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-smooth: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Typography Stacks */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Roboto Mono', Menlo, Consolas, monospace;
 
-  /* Layout */
+  /* Layout Constants */
   --sidebar-width: 260px;
   --topbar-height: 56px;
-  --panel-radius: 4px;
 }
 
 * {
@@ -66,7 +98,7 @@ body {
   background-position: 0 0;
 }
 
-/* Scrollbars */
+/* Precision Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -78,11 +110,11 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.12);
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.25);
+  background: rgba(56, 189, 248, 0.3);
 }
 
 /* Accessible Focus States */
@@ -91,31 +123,10 @@ body {
   outline-offset: 2px;
 }
 
-/* Utility Animations */
+/* Precision Animations */
 @keyframes radarSweep {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes scanlineMove {
-  0% {
-    top: 0%;
-    opacity: 0;
-  }
-  20% {
-    opacity: 0.8;
-  }
-  80% {
-    opacity: 0.8;
-  }
-  100% {
-    top: 100%;
-    opacity: 0;
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @keyframes pulseTelemetry {
@@ -124,27 +135,28 @@ body {
     transform: scale(1);
   }
   50% {
-    opacity: 0.4;
-    transform: scale(0.95);
-  }
-}
-
-@keyframes waveBar {
-  0%, 100% {
-    height: 4px;
-  }
-  50% {
-    height: 24px;
+    opacity: 0.45;
+    transform: scale(0.96);
   }
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
