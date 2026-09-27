@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 
 from typing import List, Dict, Any, Optional
 
@@ -19,6 +20,7 @@ from app.services.satellite.models import (
     SatelliteSearchRequest,
 
     SatelliteSearchResponse,
+    SatelliteScene,
 
     SatelliteSourceInfo,
 
@@ -163,36 +165,117 @@ class Sentinel2Provider(BaseSatelliteProvider):
 
 
     async def search_scenes(self, request: SatelliteSearchRequest) -> SatelliteSearchResponse:
-
         """
-
         Query Sentinel-2 imagery catalog for real scenes.
 
-
-
         If provider credentials are not configured, returns a clean 'provider_not_configured'
-
         state without fabricating scenes.
-
         """
-
         if not self.is_configured():
-
             logger.info("Satellite search requested, but satellite provider credentials are not configured.")
-
             return SatelliteSearchResponse(
-
                 status="provider_not_configured",
-
                 provider_configured=False,
-
                 message="Satellite imagery provider is not connected.",
-
                 total_scenes=0,
-
                 scenes=[],
-
             )
+
+        from app.services.satellite.aoi import resolve_aoi_geometry, AOIValidationError
+        try:
+            geometry = resolve_aoi_geometry(request.location, request.geojson_aoi)
+        except AOIValidationError as e:
+            return SatelliteSearchResponse(
+                status="error",
+                provider_configured=True,
+                message=str(e),
+                total_scenes=0,
+                scenes=[]
+            )
+
+        start_str = f"{request.start_date.isoformat()}T00:00:00Z"
+        end_str = f"{request.end_date.isoformat()}T23:59:59Z"
+
+        payload = {
+            "collections": [SENTINEL_COLLECTION],
+            "intersects": geometry,
+            "datetime": f"{start_str}/{end_str}",
+            "query": {
+                "eo:cloud_cover": {"lte": request.max_cloud_cover}
+            },
+            "limit": 30
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{CDSE_STAC_BASE_URL}/search",
+                    json=payload,
+                    headers={
+                        "Accept": "application/geo+json, application/json",
+                        "User-Agent": "EarthWatch-AI/0.1.0",
+                    }
+                )
+                response.raise_for_status()
+                data = response.json()
+        except httpx.HTTPStatusError as exc:
+            logger.error("STAC API HTTP Error: %s", exc)
+            return SatelliteSearchResponse(
+                status="error",
+                provider_configured=True,
+                message="Failed to communicate with satellite STAC API.",
+                total_scenes=0,
+                scenes=[]
+            )
+        except Exception as exc:
+            logger.error("STAC Search Exception: %s", exc)
+            return SatelliteSearchResponse(
+                status="error",
+                provider_configured=True,
+                message="An unexpected error occurred during satellite search.",
+                total_scenes=0,
+                scenes=[]
+            )
+
+        features = data.get("features", [])
+        scenes = []
+
+        for item in features:
+            try:
+                props = item.get("properties", {})
+
+                dt_str = props.get("datetime")
+                if not dt_str:
+                    continue
+                dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+
+                scene = SatelliteScene(
+                    scene_id=item.get("id"),
+                    satellite=props.get("platform", "Sentinel-2"),
+                    acquisition_datetime=dt,
+                    cloud_cover=props.get("eo:cloud_cover", 0.0),
+                    bbox=item.get("bbox", [0.0, 0.0, 0.0, 0.0]),
+                    thumbnail_url=self._extract_thumbnail_url(item.get("assets", {})),
+                    metadata_url=None,
+                    processing_level=props.get("processing:level", "Level-2A")
+                )
+
+                links = item.get("links", [])
+                for link in links:
+                    if link.get("rel") == "self":
+                        scene.metadata_url = link.get("href")
+
+                scenes.append(scene)
+            except Exception as e:
+                logger.warning("Failed to map STAC feature to SatelliteScene: %s", e)
+
+        return SatelliteSearchResponse(
+            status="success",
+            provider_configured=True,
+            message=f"Found {len(scenes)} scenes." if scenes else "No scenes found.",
+            total_scenes=len(scenes),
+            scenes=scenes
+        )
 
 
 
