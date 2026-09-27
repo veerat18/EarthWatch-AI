@@ -236,13 +236,13 @@ npm run dev
 The project maintains strict continuous integration standards. Latest verified baseline:
 
 **Backend:**
-- 64 passed
+- 55 passed
 - 10 warnings
 *(Warning counts generally reflect upstream library evolutions like Pydantic/Starlette deprecation notices).*
 
 **Frontend:**
 - 0 lint errors
-- 1 React effect dependency warning currently reported
+- 0 lint warnings
 - Production build succeeds
 
 ## Security
