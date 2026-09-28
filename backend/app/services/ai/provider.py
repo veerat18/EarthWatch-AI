@@ -73,10 +73,20 @@ class EarthAnalystProvider:
             except Exception as exc:
                 last_exc = exc
                 logger.warning(f"Gemini generation attempt {attempt + 1} failed: {exc}")
-                if "503" in str(exc) or "UNAVAILABLE" in str(exc):
+                
+                # Check for 5xx errors (transient) using the new google-genai APIError
+                from google.genai.errors import APIError
+                is_transient = False
+                if isinstance(exc, APIError) and exc.code >= 500:
+                    is_transient = True
+                elif "503" in str(exc) or "UNAVAILABLE" in str(exc) or "500" in str(exc) or "502" in str(exc) or "504" in str(exc):
+                    is_transient = True
+
+                if is_transient:
                     import asyncio
-                    await asyncio.sleep(2 * (attempt + 1))
+                    await asyncio.sleep(2 ** attempt)  # Exponential backoff: 1s, 2s, 4s
                     continue
+                
                 break
                 
         logger.error(f"Error generating AI analysis: {last_exc}")
