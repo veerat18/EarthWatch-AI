@@ -15,6 +15,7 @@ class Settings(BaseModel):
         "http://localhost:3000",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "https://earthwatch-ai.onrender.com",
     ]
 
     # Satellite Provider Settings
