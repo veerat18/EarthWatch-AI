@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_ENDPOINTS } from '../../config/api';
 
 export function AiAnalystPanel({ beforeScene, afterScene }) {
   const [status, setStatus] = useState('ready'); // 'ready', 'loading', 'success', 'error'
@@ -22,7 +23,7 @@ export function AiAnalystPanel({ beforeScene, afterScene }) {
     setAnalystData(null);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/v1/analysis/ai-analyst', {
+      const response = await fetch(API_ENDPOINTS.aiAnalyst, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

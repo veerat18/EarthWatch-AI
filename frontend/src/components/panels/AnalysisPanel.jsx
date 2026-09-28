@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SatelliteIcon, MapPinIcon, CalendarIcon, CrosshairIcon, FilterIcon } from '../common/Icons';
 import { SatelliteSceneList } from './SatelliteSceneList';
+import { API_ENDPOINTS } from '../../config/api';
 
 export function AnalysisPanel({ panelRef, onSceneSelected }) {
   const [location, setLocation] = useState('San Francisco Bay Area');
@@ -21,7 +22,7 @@ export function AnalysisPanel({ panelRef, onSceneSelected }) {
 
   // Fetch supported sources from backend on mount
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/v1/satellite/sources')
+    fetch(API_ENDPOINTS.satelliteSources)
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch satellite sources');
         return res.json();
@@ -77,7 +78,7 @@ export function AnalysisPanel({ panelRef, onSceneSelected }) {
 
     try {
       // 3. Call backend POST /api/v1/satellite/search
-      const response = await fetch('http://127.0.0.1:8000/api/v1/satellite/search', {
+      const response = await fetch(API_ENDPOINTS.satelliteSearch, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MenuIcon, XIcon, UserIcon } from '../common/Icons';
+import { API_ENDPOINTS } from '../../config/api';
 
 export function Topbar({ sidebarOpen, onToggleSidebar, activeModule = 'Overview' }) {
   const [utcTime, setUtcTime] = useState('');
@@ -18,7 +19,7 @@ export function Topbar({ sidebarOpen, onToggleSidebar, activeModule = 'Overview'
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8000/health');
+        const res = await fetch(API_ENDPOINTS.health);
         if (res.ok) {
           const data = await res.json();
           setBackendHealth({ status: 'online', project: data.project });
