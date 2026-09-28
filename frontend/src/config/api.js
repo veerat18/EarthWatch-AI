@@ -17,4 +17,5 @@ export const API_ENDPOINTS = {
   evidence: `${API_BASE_URL}/api/v1/analysis/evidence`,
   aiAnalyst: `${API_BASE_URL}/api/v1/analysis/ai-analyst`,
   reports: `${API_BASE_URL}/api/v1/reports/earth-observation`,
+  reportPdf: (reportId) => `${API_BASE_URL}/api/v1/reports/earth-observation/${encodeURIComponent(reportId)}/pdf`,
 };

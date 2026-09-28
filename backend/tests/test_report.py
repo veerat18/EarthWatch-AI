@@ -313,3 +313,29 @@ async def test_report_evidence_failure():
         )
         assert resp.status_code == 400
         assert "Scene CRS mismatch" in resp.json()["detail"]
+
+
+def test_download_pdf_success(mock_report_services):
+    # First create a report
+    payload = {
+        "before_scene_id": MOCK_BEFORE,
+        "after_scene_id": MOCK_AFTER,
+        "x": 100,
+        "y": 100,
+        "width": 256,
+        "height": 256
+    }
+    create_response = client.post("/api/v1/reports/earth-observation", json=payload)
+    assert create_response.status_code == 200
+    report_data = create_response.json()
+    report_id = report_data["metadata"]["report_id"]
+
+    # Now fetch PDF
+    pdf_response = client.get(f"/api/v1/reports/earth-observation/{report_id}/pdf")
+    assert pdf_response.status_code == 200
+    assert pdf_response.headers["content-type"] == "application/pdf"
+    assert len(pdf_response.content) > 0
+
+def test_download_pdf_not_found():
+    pdf_response = client.get("/api/v1/reports/earth-observation/NON_EXISTENT/pdf")
+    assert pdf_response.status_code == 404

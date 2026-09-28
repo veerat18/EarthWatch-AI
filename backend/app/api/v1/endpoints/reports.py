@@ -1,7 +1,9 @@
 import logging
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Response
 from app.services.reports.models import ReportRequest, EarthObservationReport
 from app.services.reports.generator import generate_earth_observation_report
+from app.services.reports.storage import save_report, get_report
+from app.services.reports.pdf_generator import generate_pdf_from_report
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,7 @@ async def create_earth_observation_report(request: ReportRequest):
     """
     try:
         response = await generate_earth_observation_report(request.model_dump())
-        
+
         if response.get("status") == "auth_missing":
             raise HTTPException(
                 status_code=status.HTTP_501_NOT_IMPLEMENTED,
@@ -41,9 +43,11 @@ async def create_earth_observation_report(request: ReportRequest):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Report generation encountered an unexpected state."
             )
-            
-        return EarthObservationReport(**response["report"])
-        
+
+        report = EarthObservationReport(**response["report"])
+        save_report(report)
+        return report
+
     except HTTPException:
         raise
     except Exception as exc:
@@ -51,4 +55,37 @@ async def create_earth_observation_report(request: ReportRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while compiling the Earth Observation report: {exc}"
+        )
+
+@router.get(
+    "/reports/earth-observation/{report_id}/pdf",
+    status_code=status.HTTP_200_OK,
+    summary="Download Earth Observation Report as PDF",
+    response_class=Response
+)
+async def download_earth_observation_report_pdf(report_id: str):
+    """
+    Download a server-generated PDF for an existing Earth Observation Report.
+    """
+    report = get_report(report_id)
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report {report_id} not found."
+        )
+
+    try:
+        pdf_bytes = generate_pdf_from_report(report)
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=EarthWatch_Earth_Observation_Report_{report_id}.pdf"
+            }
+        )
+    except Exception as exc:
+        logger.error(f"Error generating PDF for report {report_id}: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate PDF."
         )

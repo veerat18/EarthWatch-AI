@@ -1,6 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { API_ENDPOINTS } from '../../config/api';
 
 export function EarthObservationReport({ report }) {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(null);
+
+  const handleDownloadPdf = async () => {
+    setIsDownloading(true);
+    setDownloadError(null);
+    try {
+      const response = await fetch(API_ENDPOINTS.reportPdf(report.metadata.report_id));
+      if (!response.ok) {
+        throw new Error('Failed to download PDF');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `EarthWatch_Earth_Observation_Report_${report.metadata.report_id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (err) {
+      setDownloadError(err.message);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   if (!report) return null;
 
   const {
@@ -72,6 +100,26 @@ export function EarthObservationReport({ report }) {
           <div>GENERATED: {new Date(metadata.generated_at).toLocaleString()}</div>
           <div>PLATFORM: {metadata.platform}</div>
           <div>PROJECT: {metadata.project}</div>
+            <div style={{ marginTop: '12px' }}>
+              <button
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+                className="ew-action-btn"
+                style={{
+                  backgroundColor: 'var(--accent-cyan)',
+                  color: 'var(--bg-base)',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  fontWeight: 'bold',
+                  cursor: isDownloading ? 'not-allowed' : 'pointer',
+                  opacity: isDownloading ? 0.7 : 1
+                }}
+              >
+                {isDownloading ? 'DOWNLOADING...' : 'DOWNLOAD PDF'}
+              </button>
+              {downloadError && <div style={{ color: 'var(--status-error)', marginTop: '4px', fontSize: '10px' }}>{downloadError}</div>}
+            </div>
         </div>
       </div>
 
@@ -87,7 +135,7 @@ export function EarthObservationReport({ report }) {
         <h3 style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--accent-cyan)', letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>
           1. EXECUTIVE SUMMARY
         </h3>
-        
+
         <div className="ew-metric-grid" style={{ marginBottom: '16px' }}>
           <div className="ew-metric-card">
             <span className="ew-metric-label">INTERVAL</span>
