@@ -20,7 +20,7 @@ def mock_report_services():
                     mock_stac.side_effect = lambda scene_id: {
                         "status": "success",
                         "scene_id": scene_id,
-                        "satellite": "Sentinel-2A" if "S2A" in scene_id else "Sentinel-2B",
+                        "platform": "Sentinel-2A" if "S2A" in scene_id else "Sentinel-2B",
                         "acquisition_datetime": "2026-01-05T05:32:51.024Z" if scene_id == MOCK_BEFORE else "2026-01-18T05:30:49.024Z",
                         "cloud_cover": 7.39 if scene_id == MOCK_BEFORE else 1.65,
                         "tile": "T43RGN",

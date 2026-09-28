@@ -26,7 +26,7 @@ async def test_evidence_generation_valid(mock_evidence_services):
     mock_stac.side_effect = lambda scene_id: {
         "status": "success",
         "scene_id": scene_id,
-        "satellite": "Sentinel-2A" if "S2A" in scene_id else "Sentinel-2B",
+        "platform": "Sentinel-2A" if "S2A" in scene_id else "Sentinel-2B",
         "acquisition_datetime": "2026-01-05T05:32:51.024Z" if scene_id == MOCK_BEFORE else "2026-01-18T05:30:49.024Z",
         "cloud_cover": 2.5 if scene_id == MOCK_BEFORE else 1.0,
         "tile": "T43RGN"
@@ -106,7 +106,7 @@ async def test_evidence_generation_change_failure(mock_evidence_services):
     mock_stac, mock_change = mock_evidence_services
     
     mock_stac.return_value = {
-        "status": "success", "scene_id": MOCK_BEFORE, "satellite": "S2",
+        "status": "success", "scene_id": MOCK_BEFORE, "platform": "S2",
         "acquisition_datetime": "2026", "cloud_cover": 0, "tile": "T"
     }
     
