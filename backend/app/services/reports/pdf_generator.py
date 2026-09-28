@@ -38,13 +38,18 @@ def generate_pdf_from_report(report: EarthObservationReport) -> bytes:
     # Section 2 - Acquisition
     Story.append(Paragraph("2. Acquisition", h2_style))
     acq = report.acquisition
+    tile_id = acq.tile
+    if not tile_id or tile_id == "Unknown":
+        from app.services.analysis.ndwi_change import extract_tile
+        tile_id = extract_tile(acq.before_scene_id) or extract_tile(acq.after_scene_id) or "Unknown"
+
     data = [
         ["Before Scene ID", acq.before_scene_id],
         ["After Scene ID", acq.after_scene_id],
         ["Before Acquisition", acq.before_acquisition],
         ["After Acquisition", acq.after_acquisition],
         ["Observation Interval (Days)", str(acq.temporal_interval_days)],
-        ["Tile ID", acq.tile],
+        ["Tile ID", tile_id],
         ["Spatial Window", f"X: {acq.analysis_window.get('x')} Y: {acq.analysis_window.get('y')} W: {acq.analysis_window.get('width')} H: {acq.analysis_window.get('height')}"],
         ["Resolution", f"{acq.resolution}m"],
         ["CRS", acq.crs],
@@ -60,7 +65,7 @@ def generate_pdf_from_report(report: EarthObservationReport) -> bytes:
     ]))
     Story.append(t)
     Story.append(Spacer(1, 12))
-    
+
     # Section 3 - Methodology
     Story.append(Paragraph("3. Methodology", h2_style))
     Story.append(Paragraph("<b>NDVI Formula:</b> (B08 - B04) / (B08 + B04)", normal_style))
@@ -68,7 +73,7 @@ def generate_pdf_from_report(report: EarthObservationReport) -> bytes:
     Story.append(Paragraph("<b>Change Calculation:</b> After - Before", normal_style))
     Story.append(Paragraph("Classification thresholds are analytical rules and are not machine-learning predictions.", normal_style))
     Story.append(Spacer(1, 12))
-    
+
     # Section 4 - Vegetation / NDVI
     Story.append(Paragraph("4. Vegetation / NDVI", h2_style))
     v = report.vegetation
@@ -84,15 +89,25 @@ def generate_pdf_from_report(report: EarthObservationReport) -> bytes:
     for k, item in v.classifications.items():
         Story.append(Paragraph(f"<b>{k.replace('_', ' ').title()}:</b> {item.count} pixels ({item.percentage:.2f}%)", normal_style))
     Story.append(Spacer(1, 12))
-    
+
     # Section 5 - Water Signal / NDWI
     Story.append(Paragraph("5. Water Signal / NDWI", h2_style))
     w = report.water_signal
     if w.available:
+        before_mean = f"{w.before_ndwi.mean:.4f}" if getattr(w, "before_ndwi", None) and w.before_ndwi else "N/A"
+        after_mean = f"{w.ndwi.mean:.4f}" if w.ndwi else "N/A"
+        change_mean = f"{w.ndwi_change.mean:.4f}" if w.ndwi_change else "N/A"
+
         w_data = [
             ["Metric", "Before", "After", "Change"],
-            ["Mean", "N/A", f"{w.ndwi.mean:.4f}" if w.ndwi else "N/A", f"{w.ndwi_change.mean:.4f}" if w.ndwi_change else "N/A"],
+            ["Mean", before_mean, after_mean, change_mean],
         ]
+        if (getattr(w, "before_ndwi", None) and w.before_ndwi and w.before_ndwi.median is not None) or (w.ndwi and w.ndwi.median is not None):
+            before_median = f"{w.before_ndwi.median:.4f}" if getattr(w, "before_ndwi", None) and w.before_ndwi else "N/A"
+            after_median = f"{w.ndwi.median:.4f}" if w.ndwi else "N/A"
+            change_median = f"{w.ndwi_change.median:.4f}" if w.ndwi_change else "N/A"
+            w_data.append(["Median", before_median, after_median, change_median])
+
         wt = Table(w_data)
         wt.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 1, colors.black)]))
         Story.append(wt)
@@ -114,10 +129,29 @@ def generate_pdf_from_report(report: EarthObservationReport) -> bytes:
     # Section 7 - AI Earth Analyst
     Story.append(Paragraph("7. AI Earth Analyst", h2_style))
     ai = report.ai_analysis
-    Story.append(Paragraph(ai.summary if ai.summary else "AI Analyst unavailable.", normal_style))
-    if ai.key_findings:
-        for finding in ai.key_findings:
-            Story.append(Paragraph(f"- {finding}", normal_style))
+    if ai.available and ai.summary:
+        if ai.provider:
+            Story.append(Paragraph(f"<b>Provider:</b> {ai.provider}", normal_style))
+        Story.append(Paragraph(ai.summary, normal_style))
+        if ai.key_findings:
+            Story.append(Spacer(1, 4))
+            Story.append(Paragraph("<b>Key Findings:</b>", normal_style))
+            for finding in ai.key_findings:
+                Story.append(Paragraph(f"• {finding}", normal_style))
+        if ai.vegetation_assessment:
+            Story.append(Spacer(1, 4))
+            Story.append(Paragraph(f"<b>Vegetation Assessment:</b> {ai.vegetation_assessment}", normal_style))
+        if ai.water_signal_assessment:
+            Story.append(Spacer(1, 4))
+            Story.append(Paragraph(f"<b>Water-Signal Assessment:</b> {ai.water_signal_assessment}", normal_style))
+        if ai.change_assessment:
+            Story.append(Spacer(1, 4))
+            Story.append(Paragraph(f"<b>Change Assessment:</b> {ai.change_assessment}", normal_style))
+        if ai.confidence_note:
+            Story.append(Spacer(1, 4))
+            Story.append(Paragraph(f"<b>Confidence:</b> {ai.confidence_note}", normal_style))
+    else:
+        Story.append(Paragraph(ai.summary or "AI Earth Analyst interpretation unavailable; deterministic sensor metrics remain fully valid.", normal_style))
     Story.append(Spacer(1, 12))
     
     # Section 8 - Data Quality

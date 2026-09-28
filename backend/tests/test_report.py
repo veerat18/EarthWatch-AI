@@ -315,6 +315,31 @@ async def test_report_evidence_failure():
         assert "Scene CRS mismatch" in resp.json()["detail"]
 
 
+def extract_pdf_text(pdf_bytes: bytes) -> str:
+    import base64, zlib
+    text_parts = []
+    idx = 0
+    while True:
+        start = pdf_bytes.find(b'stream', idx)
+        if start == -1:
+            break
+        end = pdf_bytes.find(b'endstream', start)
+        start_data = pdf_bytes.find(b'\n', start) + 1
+        stream_data = pdf_bytes[start_data:end].strip()
+        try:
+            a85 = base64.a85decode(stream_data, adobe=True)
+            decomp = zlib.decompress(a85)
+            text_parts.append(decomp.decode('latin1', errors='ignore'))
+        except Exception:
+            try:
+                decomp = zlib.decompress(stream_data)
+                text_parts.append(decomp.decode('latin1', errors='ignore'))
+            except Exception:
+                pass
+        idx = end + 9
+    return "\n".join(text_parts)
+
+
 def test_download_pdf_success(mock_report_services):
     # First create a report
     payload = {
@@ -330,12 +355,129 @@ def test_download_pdf_success(mock_report_services):
     report_data = create_response.json()
     report_id = report_data["metadata"]["report_id"]
 
+    # Verify report model contains Tile ID and before_ndwi
+    assert report_data["acquisition"]["tile"] == "T43RGN"
+    assert report_data["water_signal"]["before_ndwi"] is not None
+    assert report_data["water_signal"]["before_ndwi"]["mean"] == -0.3816
+
     # Now fetch PDF
     pdf_response = client.get(f"/api/v1/reports/earth-observation/{report_id}/pdf")
     assert pdf_response.status_code == 200
     assert pdf_response.headers["content-type"] == "application/pdf"
     assert len(pdf_response.content) > 0
 
+    # Verify PDF content contains Tile ID and NDWI Before value
+    text = extract_pdf_text(pdf_response.content)
+    assert "T43RGN" in text
+    assert "-0.3816" in text
+    assert "-0.3753" in text
+    assert "0.0063" in text
+
+
 def test_download_pdf_not_found():
     pdf_response = client.get("/api/v1/reports/earth-observation/NON_EXISTENT/pdf")
     assert pdf_response.status_code == 404
+
+
+def test_pdf_tile_derivation_from_scene_id():
+    from app.services.reports.models import (
+        ReportMetadata, ReportAcquisition, ReportExecutiveSummary,
+        ReportMethodology, ReportVegetationAnalysis, StatsSummary,
+        ClassificationItem, ReportWaterSignalAnalysis, ReportChangeDetection,
+        ReportAIAnalysis, ReportDataQuality, ReportTechnicalMetadata
+    )
+    from app.services.reports.pdf_generator import generate_pdf_from_report
+
+    m = ReportMetadata(report_id='TEST_TILE', generated_at='2026-09-29T10:00:00Z', project='P', analysis_type='A', platform='P')
+    # tile explicitly None/Unknown, but scene IDs contain T43RGN
+    acq = ReportAcquisition(
+        before_scene_id=MOCK_BEFORE,
+        after_scene_id=MOCK_AFTER,
+        before_acquisition='2026-01-05',
+        after_acquisition='2026-01-18',
+        before_cloud_cover=0,
+        after_cloud_cover=0,
+        temporal_interval_days=13,
+        tile="Unknown",
+        resolution=10,
+        crs='EPSG:32643',
+        analysis_window={'x': 0, 'y': 0, 'width': 512, 'height': 512}
+    )
+    exec_sum = ReportExecutiveSummary(
+        acquisition_interval='13', analyzed_area='A', major_measured_ndvi='M',
+        major_measured_ndwi='M', dominant_change_classifications='D',
+        measured_findings=[], ai_interpretation=None, summary_text='Summary'
+    )
+    meth = ReportMethodology()
+    s_ndvi = StatsSummary(min=0, max=1, mean=0.5, median=0.5, valid_pixel_count=100, nodata_pixel_count=0)
+    v = ReportVegetationAnalysis(before_ndvi=s_ndvi, after_ndvi=s_ndvi, ndvi_change=s_ndvi, classifications={'a': ClassificationItem(count=0, percentage=0.0)})
+    w = ReportWaterSignalAnalysis(available=False, note='No')
+    cd = ReportChangeDetection(analysis_window_pixels=100, valid_pixels=100, nodata_pixels=0, ndvi_mean_change=0, dominant_vegetation_signal='', dynamics_summary='D')
+    ai = ReportAIAnalysis(available=False, provider='', summary='No AI', key_findings=[], limitations=[], disclaimer='')
+    dq = ReportDataQuality(valid_pixels=100, nodata_pixels=0, cloud_cover_before=0, cloud_cover_after=0, methodology={}, limitations=[])
+    tm = ReportTechnicalMetadata(sensor='S', crs='C', spatial_resolution='R', tile='T43RGN', coordinate_reference_system='C', analysis_engine='A', stac_catalog='C')
+
+    report = EarthObservationReport(
+        metadata=m, acquisition=acq, executive_summary=exec_sum, methodology=meth,
+        vegetation=v, water_signal=w, change_detection=cd, ai_analysis=ai,
+        data_quality=dq, technical_metadata=tm
+    )
+    pdf = generate_pdf_from_report(report)
+    text = extract_pdf_text(pdf)
+    assert "T43RGN" in text
+
+
+def test_pdf_missing_optional_metadata_safely_represented():
+    from app.services.reports.models import (
+        ReportMetadata, ReportAcquisition, ReportExecutiveSummary,
+        ReportMethodology, ReportVegetationAnalysis, StatsSummary,
+        ClassificationItem, ReportWaterSignalAnalysis, ReportChangeDetection,
+        ReportAIAnalysis, ReportDataQuality, ReportTechnicalMetadata
+    )
+    from app.services.reports.pdf_generator import generate_pdf_from_report
+
+    m = ReportMetadata(report_id='TEST_MISSING', generated_at='2026-09-29T10:00:00Z', project='P', analysis_type='A', platform='P')
+    # Arbitrary scene IDs with no tile pattern
+    acq = ReportAcquisition(
+        before_scene_id='CUSTOM_SCENE_ALPHA',
+        after_scene_id='CUSTOM_SCENE_BETA',
+        before_acquisition='2026-01-05',
+        after_acquisition='2026-01-18',
+        before_cloud_cover=0,
+        after_cloud_cover=0,
+        temporal_interval_days=13,
+        tile="Unknown",
+        resolution=10,
+        crs='EPSG:32643',
+        analysis_window={'x': 0, 'y': 0, 'width': 512, 'height': 512}
+    )
+    exec_sum = ReportExecutiveSummary(
+        acquisition_interval='13', analyzed_area='A', major_measured_ndvi='M',
+        major_measured_ndwi='M', dominant_change_classifications='D',
+        measured_findings=[], ai_interpretation=None, summary_text='Summary'
+    )
+    meth = ReportMethodology()
+    s_ndvi = StatsSummary(min=0, max=1, mean=0.5, median=0.5, valid_pixel_count=100, nodata_pixel_count=0)
+    v = ReportVegetationAnalysis(before_ndvi=s_ndvi, after_ndvi=s_ndvi, ndvi_change=s_ndvi, classifications={'a': ClassificationItem(count=0, percentage=0.0)})
+
+    s_after = StatsSummary(min=-0.55, max=0.19, mean=-0.3753, median=-0.4012, valid_pixel_count=100, nodata_pixel_count=0)
+    s_change = StatsSummary(min=-0.30, max=0.38, mean=0.0063, median=0.0070, valid_pixel_count=100, nodata_pixel_count=0)
+
+    # before_ndwi is None
+    w = ReportWaterSignalAnalysis(available=True, before_ndwi=None, ndwi=s_after, ndwi_change=s_change, note='Spectral water signal')
+    cd = ReportChangeDetection(analysis_window_pixels=100, valid_pixels=100, nodata_pixels=0, ndvi_mean_change=0, dominant_vegetation_signal='', dynamics_summary='D')
+    ai = ReportAIAnalysis(available=False, provider='', summary='No AI', key_findings=[], limitations=[], disclaimer='')
+    dq = ReportDataQuality(valid_pixels=100, nodata_pixels=0, cloud_cover_before=0, cloud_cover_after=0, methodology={}, limitations=[])
+    tm = ReportTechnicalMetadata(sensor='S', crs='C', spatial_resolution='R', tile='Unknown', coordinate_reference_system='C', analysis_engine='A', stac_catalog='C')
+
+    report = EarthObservationReport(
+        metadata=m, acquisition=acq, executive_summary=exec_sum, methodology=meth,
+        vegetation=v, water_signal=w, change_detection=cd, ai_analysis=ai,
+        data_quality=dq, technical_metadata=tm
+    )
+    pdf = generate_pdf_from_report(report)
+    text = extract_pdf_text(pdf)
+    assert "Unknown" in text
+    assert "N/A" in text
+    assert "-0.3753" in text
+    assert "0.0063" in text
