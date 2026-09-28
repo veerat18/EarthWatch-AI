@@ -54,7 +54,7 @@ class Sentinel2Provider(BaseSatelliteProvider):
 
         self.provider_name = settings.SATELLITE_PROVIDER or "Copernicus Data Space Ecosystem"
 
-        self.timeout = 30.0
+        self.timeout = 60.0
 
 
 
@@ -665,7 +665,7 @@ class Sentinel2Provider(BaseSatelliteProvider):
 
 
 
-            logger.error("Error fetching scene assets: %s", exc)
+            logger.error("Error fetching scene assets: %s", repr(exc))
 
 
 
