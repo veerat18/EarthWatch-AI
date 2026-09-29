@@ -79,6 +79,11 @@ async def generate_earth_observation_report(request_dict: Dict[str, Any]) -> Dic
     # 3.2 Acquisition Information
     src_data = evidence.source_data
     params = evidence.analysis_parameters
+    tile = src_data.before_scene.tile or src_data.after_scene.tile
+    if not tile or tile == "Unknown":
+        from app.services.analysis.ndwi_change import extract_tile
+        tile = extract_tile(src_data.before_scene.scene_id) or extract_tile(src_data.after_scene.scene_id) or "Unknown"
+
     acquisition = ReportAcquisition(
         before_scene_id=src_data.before_scene.scene_id,
         after_scene_id=src_data.after_scene.scene_id,
@@ -87,7 +92,7 @@ async def generate_earth_observation_report(request_dict: Dict[str, Any]) -> Dic
         before_cloud_cover=src_data.before_scene.cloud_cover,
         after_cloud_cover=src_data.after_scene.cloud_cover,
         temporal_interval_days=src_data.temporal_interval_days,
-        tile=src_data.before_scene.tile or "Unknown",
+        tile=tile,
         resolution=params.resolution,
         crs=params.crs,
         analysis_window=params.window,
@@ -142,6 +147,19 @@ async def generate_earth_observation_report(request_dict: Dict[str, Any]) -> Dic
             for k, v in evidence.ndwi.classifications.model_dump().items()
         }
 
+        before_ndwi_stats = None
+        if evidence.ndwi_change.before and evidence.ndwi_change.before.measurements:
+            b_meas = evidence.ndwi_change.before.measurements
+            if isinstance(b_meas, dict):
+                before_ndwi_stats = StatsSummary(
+                    min=b_meas.get("min", 0.0),
+                    max=b_meas.get("max", 0.0),
+                    mean=b_meas.get("mean", 0.0),
+                    median=b_meas.get("median", 0.0),
+                    valid_pixel_count=b_meas.get("valid_pixel_count"),
+                    nodata_pixel_count=b_meas.get("nodata_pixel_count"),
+                )
+
         ndwi_chg_meas = evidence.ndwi_change.change
         ndwi_change_stats = StatsSummary(
             min=ndwi_chg_meas.min,
@@ -162,8 +180,63 @@ async def generate_earth_observation_report(request_dict: Dict[str, Any]) -> Dic
 
         water_signal = ReportWaterSignalAnalysis(
             available=True,
+            before_ndwi=before_ndwi_stats,
             ndwi=ndwi_stats,
             ndwi_classifications=ndwi_classes,
+            ndwi_change=ndwi_change_stats,
+            change_classifications=ndwi_change_classes,
+            note="NDWI measures analytical spectral water signal and does not confirm physical water bodies or inundation.",
+        )
+    elif evidence.ndwi_change:
+        before_ndwi_stats = None
+        if evidence.ndwi_change.before and evidence.ndwi_change.before.measurements:
+            b_meas = evidence.ndwi_change.before.measurements
+            if isinstance(b_meas, dict):
+                before_ndwi_stats = StatsSummary(
+                    min=b_meas.get("min", 0.0),
+                    max=b_meas.get("max", 0.0),
+                    mean=b_meas.get("mean", 0.0),
+                    median=b_meas.get("median", 0.0),
+                    valid_pixel_count=b_meas.get("valid_pixel_count"),
+                    nodata_pixel_count=b_meas.get("nodata_pixel_count"),
+                )
+
+        after_ndwi_stats = None
+        if evidence.ndwi_change.after and evidence.ndwi_change.after.measurements:
+            a_meas = evidence.ndwi_change.after.measurements
+            if isinstance(a_meas, dict):
+                after_ndwi_stats = StatsSummary(
+                    min=a_meas.get("min", 0.0),
+                    max=a_meas.get("max", 0.0),
+                    mean=a_meas.get("mean", 0.0),
+                    median=a_meas.get("median", 0.0),
+                    valid_pixel_count=a_meas.get("valid_pixel_count"),
+                    nodata_pixel_count=a_meas.get("nodata_pixel_count"),
+                )
+
+        ndwi_chg_meas = evidence.ndwi_change.change
+        ndwi_change_stats = StatsSummary(
+            min=ndwi_chg_meas.min,
+            max=ndwi_chg_meas.max,
+            mean=ndwi_chg_meas.mean,
+            median=ndwi_chg_meas.median,
+            valid_pixel_count=ndwi_chg_meas.valid_pixel_count,
+            nodata_pixel_count=ndwi_chg_meas.nodata_pixel_count,
+        )
+        ndwi_change_classes = {
+            k: ClassificationItem(
+                count=v.get("count", 0),
+                percentage=v.get("percentage", 0.0),
+                description=v.get("description")
+            )
+            for k, v in evidence.ndwi_change.classifications.model_dump().items()
+        }
+
+        water_signal = ReportWaterSignalAnalysis(
+            available=True,
+            before_ndwi=before_ndwi_stats,
+            ndwi=after_ndwi_stats,
+            ndwi_classifications=None,
             ndwi_change=ndwi_change_stats,
             change_classifications=ndwi_change_classes,
             note="NDWI measures analytical spectral water signal and does not confirm physical water bodies or inundation.",
@@ -171,6 +244,7 @@ async def generate_earth_observation_report(request_dict: Dict[str, Any]) -> Dic
     else:
         water_signal = ReportWaterSignalAnalysis(
             available=False,
+            before_ndwi=None,
             ndwi=None,
             ndwi_classifications=None,
             ndwi_change=None,

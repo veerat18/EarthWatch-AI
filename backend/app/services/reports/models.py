@@ -70,6 +70,7 @@ class ReportVegetationAnalysis(BaseModel):
 
 class ReportWaterSignalAnalysis(BaseModel):
     available: bool = True
+    before_ndwi: Optional[StatsSummary] = None
     ndwi: Optional[StatsSummary] = None
     ndwi_classifications: Optional[Dict[str, ClassificationItem]] = None
     ndwi_change: Optional[StatsSummary] = None

@@ -3,7 +3,7 @@ from typing import Dict, Any
 from app.services.satellite.sentinel2 import Sentinel2Provider
 from app.services.analysis.change_detection import calculate_change_detection
 from app.services.analysis.ndwi import calculate_ndwi
-from app.services.analysis.ndwi_change import calculate_ndwi_change_detection
+from app.services.analysis.ndwi_change import calculate_ndwi_change_detection, extract_tile
 
 
 async def generate_analysis_evidence(request_data: dict) -> Dict[str, Any]:
@@ -183,14 +183,14 @@ async def generate_analysis_evidence(request_data: dict) -> Dict[str, Any]:
                 "acquisition_datetime": before_meta["acquisition_datetime"],
                 "cloud_cover": before_meta["cloud_cover"],
                 "satellite": before_meta.get("platform", "Sentinel-2"),
-                "tile": before_meta.get("tile"),
+                "tile": before_meta.get("tile") or extract_tile(before_meta["scene_id"]),
             },
             "after_scene": {
                 "scene_id": after_meta["scene_id"],
                 "acquisition_datetime": after_meta["acquisition_datetime"],
                 "cloud_cover": after_meta["cloud_cover"],
                 "satellite": after_meta.get("platform", "Sentinel-2"),
-                "tile": after_meta.get("tile"),
+                "tile": after_meta.get("tile") or extract_tile(after_meta["scene_id"]),
             },
             "temporal_interval_days": interval_days,
             "aoi_location": None,

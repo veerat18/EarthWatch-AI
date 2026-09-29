@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime, timezone
 
 from typing import List, Dict, Any, Optional
@@ -765,38 +766,25 @@ class Sentinel2Provider(BaseSatelliteProvider):
 
 
 
+                tile = props.get("s2:mgrs_tile")
+                if tile and not tile.startswith("T"):
+                    tile = f"T{tile}"
+                if not tile:
+                    sid = data.get("id") or scene_id
+                    for part in sid.split("_"):
+                        if re.match(r"^T\d{2}[A-Z]{3}$", part):
+                            tile = part
+                            break
+
                 return {
-
-
-
                     "status": "success",
-
-
-
                     "scene_id": data.get("id"),
-
-
-
                     "acquisition_datetime": props.get("datetime"),
-
-
-
                     "cloud_cover": props.get("eo:cloud_cover", 0.0),
-
-
-
                     "platform": props.get("platform"),
-
-
-
                     "instruments": props.get("instruments", []),
-
-
-
-                    "processing_level": props.get("processing:level")
-
-
-
+                    "processing_level": props.get("processing:level"),
+                    "tile": tile,
                 }
 
 
